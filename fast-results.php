@@ -10,7 +10,7 @@
  * Plugin Name:   Fast Results
  * Plugin URI:    https://plumislandmedia.net/wordpress-plugins/fast-results/
  * Description:   Speed up the generation of large site result pages.
- * Version:       0.1.2
+ * Version:       0.1.3
  * Author:        Ollie Jones
  * Author URI:    https://github.com/OllieJones
  * Text Domain:   fast-results
@@ -116,6 +116,14 @@ class FastResults {
     if ( isset( $query->query_vars['fast-results-key'] ) ) {
       if ( isset( $query->query_vars['fast-results-value'] ) ) {
         $request = str_replace( 'FOUND_ROWS()', $query->query_vars['fast-results-value'], $request );
+      } else {
+        // If no cached value, run a separate query to get the count
+        global $wpdb;
+        $count_query = "SELECT COUNT(*) FROM ({$request}) AS subquery";
+        $found_rows = $wpdb->get_var($count_query);
+        $query->query_vars['fast-results-value'] = $found_rows;
+        wp_cache_set($query->query_vars['fast-results-key'], $found_rows, 'fast-results-found-rows', WEEK_IN_SECONDS);
+        $request = str_replace('FOUND_ROWS()', $found_rows, $request);
       }
     }
 
@@ -241,7 +249,7 @@ class FastResults {
 const FAST_RESULTS_NAME = 'Fast Results';
 
 // Plugin version
-const FAST_RESULTS_VERSION = '0.1.2';
+const FAST_RESULTS_VERSION = '0.1.3';
 
 // Plugin Root File
 const FAST_RESULTS_PLUGIN_FILE = __FILE__;
