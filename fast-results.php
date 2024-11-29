@@ -243,6 +243,33 @@ class FastResults {
     return preg_replace( '/.+?\sFROM\s(.+)\sLIMIT\s\d+.*$/', '$1', $request );
   }
 
+  /**
+   * Adds error handling for database queries.
+   *
+   * @param string $query Database query.
+   * @return string|WP_Error
+   */
+  public function handle_db_error( $query ) {
+    global $wpdb;
+    $result = $wpdb->query( $query );
+    if ( $result === false ) {
+      return new \WP_Error( 'db_query_error', __( 'Database query error', 'fast-results' ), $wpdb->last_error );
+    }
+    return $result;
+  }
+
+  /**
+   * Logs performance metrics.
+   *
+   * @param string $metric Metric name.
+   * @param mixed $value Metric value.
+   */
+  public function log_performance( $metric, $value ) {
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+      error_log( sprintf( '[Fast Results] %s: %s', $metric, print_r( $value, true ) ) );
+    }
+  }
+
 }
 
 // Plugin name
